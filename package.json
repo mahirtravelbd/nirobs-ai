@@ -1,0 +1,16 @@
+{
+  "name": "nirobs-ai",
+  "version": "1.0.0",
+  "description": "NIROB'S AI - independent AI chat webapp powered by Claude API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
