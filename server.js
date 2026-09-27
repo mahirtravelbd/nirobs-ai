@@ -46,7 +46,12 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const data = await response.json();
-    res.json({ text: data.output_text || '' });
+    const modelStep = (data.steps || []).find(s => s.type === 'model_output');
+    const text = (modelStep?.content || [])
+      .filter(c => c.type === 'text')
+      .map(c => c.text)
+      .join('');
+    res.json({ text: text || 'দুঃখিত, উত্তর পাওয়া যায়নি।' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'সার্ভার এরর।' });
