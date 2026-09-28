@@ -36,6 +36,11 @@ let history = [];
 const chat = document.getElementById('chat');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
+const form = document.getElementById('form');
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+});
 
 function addBubble(role, text){
   const d = document.createElement('div');
@@ -46,10 +51,10 @@ function addBubble(role, text){
   return d;
 }
 
-document.getElementById('form').addEventListener('submit', async e => {
+form.addEventListener('submit', async e => {
   e.preventDefault();
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || sendBtn.disabled) return;
   input.value = '';
   addBubble('user', text);
   history.push({ role: 'user', content: text });
@@ -61,14 +66,29 @@ document.getElementById('form').addEventListener('submit', async e => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: history })
     });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    bubble.textContent = data.text;
-    history.push({ role: 'assistant', content: data.text });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'সার্ভার থেকে উত্তর আসেনি');
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      full += decoder.decode(value, { stream: true });
+      bubble.textContent = full;
+      chat.scrollTop = chat.scrollHeight;
+    }
+    if (!full) full = 'দুঃখিত, উত্তর পাওয়া যায়নি।';
+    bubble.textContent = full;
+    history.push({ role: 'assistant', content: full });
   } catch (err) {
     bubble.textContent = 'দুঃখিত, সমস্যা হয়েছে: ' + err.message;
+    history.pop();
   }
   sendBtn.disabled = false;
+  input.focus();
 });
 </script>
 </body>
